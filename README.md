@@ -1,8 +1,12 @@
+:warning: This repository is no longer mantained consider using [Room](https://developer.android.com/topic/libraries/architecture/room) as an alternative :warning: 
+
 ![Downloads](https://jitpack.io/v/VictorAlbertos/RxCache/month.svg)
 
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RxCache-green.svg?style=true)](https://android-arsenal.com/details/1/3016)
 
 # RxCache
+
+> [**中文文档**](http://www.jianshu.com/p/b58ef6b0624b)
 
 _For a more reactive approach go [here](https://github.com/VictorAlbertos/ReactiveCache/tree/2.x)_.
 
@@ -36,8 +40,8 @@ allprojects {
 And add next dependencies in the build.gradle of the module:
 ```gradle
 dependencies {
-    compile "com.github.VictorAlbertos.RxCache:runtime:1.8.0-2.x"
-    compile "io.reactivex.rxjava2:rxjava:2.0.6"
+    compile "com.github.VictorAlbertos.RxCache:runtime:1.8.3-2.x"
+    compile "io.reactivex.rxjava2:rxjava:2.1.6"
 }
 ```
 
@@ -46,13 +50,13 @@ Because RxCache uses internally [Jolyglot](https://github.com/VictorAlbertos/Jol
 ```gradle
 dependencies {
     // To use Gson 
-    compile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.3'
+    compile 'com.github.VictorAlbertos.Jolyglot:gson:0.0.4'
     
     // To use Jackson
-    compile 'com.github.VictorAlbertos.Jolyglot:jackson:0.0.3'
+    compile 'com.github.VictorAlbertos.Jolyglot:jackson:0.0.4'
     
     // To use Moshi
-    compile 'com.github.VictorAlbertos.Jolyglot:moshi:0.0.3'
+    compile 'com.github.VictorAlbertos.Jolyglot:moshi:0.0.4'
 }
 ```
 
@@ -62,17 +66,24 @@ Define an `interface` with as much methods as needed to create the caching provi
 
 ```java
 interface Providers {
+
+        @ProviderKey("mocks")
         Observable<List<Mock>> getMocks(Observable<List<Mock>> oMocks);
     
+        @ProviderKey("mocks-5-minute-ttl")
         @LifeCache(duration = 5, timeUnit = TimeUnit.MINUTES)
         Observable<List<Mock>> getMocksWith5MinutesLifeTime(Observable<List<Mock>> oMocks);
     
+        @ProviderKey("mocks-evict-provider")
         Observable<List<Mock>> getMocksEvictProvider(Observable<List<Mock>> oMocks, EvictProvider evictProvider);
     
+        @ProviderKey("mocks-paginate")
         Observable<List<Mock>> getMocksPaginate(Observable<List<Mock>> oMocks, DynamicKey page);
     
+        @ProviderKey("mocks-paginate-evict-per-page")
         Observable<List<Mock>> getMocksPaginateEvictingPerPage(Observable<List<Mock>> oMocks, DynamicKey page, EvictDynamicKey evictPage);
         
+        @ProviderKey("mocks-paginate-evict-per-filter")
         Observable<List<Mock>> getMocksPaginateWithFiltersEvictingPerFilter(Observable<List<Mock>> oMocks, DynamicKeyGroup filterPage, EvictDynamicKey evictFilter);
 }
 ```
@@ -83,6 +94,7 @@ RxCache accepts as argument a set of classes to indicate how the provider needs 
 
 * A Reactive type is the only object required to create a provider. This Reactive type must be equal to the one specified by the returning value of the provider.
 * [EvictProvider](https://github.com/VictorAlbertos/RxCache/blob/master/core/src/main/java/io/rx_cache/EvictProvider.java) allows to explicitly evict all the data associated with the provider.
+* [@ProviderKey](https://github.com/VictorAlbertos/RxCache/blob/master/core/src/main/java/io/rx_cache/ProviderKey.java) is an annotation for provider methods that is highly recommended to use and proguard users MUST use this annotation, if not used the method names will be used as provider keys (cache keys) and proguard users will quickly run into problems, please see [Proguard](proguard) for detailed information. Using the annotaiton is also useful when not using Proguard as it makes sure you can change your method names without having to write a migration for old cache files.
 * [EvictDynamicKey](https://github.com/VictorAlbertos/RxCache/blob/master/core/src/main/java/io/rx_cache/EvictDynamicKey.java) allows to explicitly evict the data of an specific [DynamicKey](https://github.com/VictorAlbertos/RxCache/blob/master/runtime/src/main/java/io/rx_cache/DynamicKey.java).
 * [EvictDynamicKeyGroup](https://github.com/VictorAlbertos/RxCache/blob/master/core/src/main/java/io/rx_cache/EvictDynamicKeyGroup.java) allows to explicitly evict the data of an specific [DynamicKeyGroup](https://github.com/VictorAlbertos/RxCache/blob/master/runtime/src/main/java/io/rx_cache/DynamicKeyGroup.java).
 * [DynamicKey](https://github.com/VictorAlbertos/RxCache/blob/master/runtime/src/main/java/io/rx_cache/DynamicKey.java) is a wrapper around the key object for those providers which need to handle multiple records, so they need to provide multiple keys, such us endpoints with pagination, ordering or filtering requirements. To evict the data associated with one particular key use `EvictDynamicKey`.
@@ -111,10 +123,14 @@ Providers providers = new RxCache.Builder()
 
 ```java
 interface Providers {
+
+    @ProviderKey("mocks-evict-provider")
     Observable<List<Mock>> getMocksEvictProvider(Observable<List<Mock>> oMocks, EvictProvider evictProvider);
 
+    @ProviderKey("mocks-paginate-evict-per-page")
     Observable<List<Mock>> getMocksPaginateEvictingPerPage(Observable<List<Mock>> oMocks, DynamicKey page, EvictDynamicKey evictPage);
 
+    @ProviderKey("mocks-paginate-evict-per-filter")
     Observable<List<Mock>> getMocksPaginateWithFiltersEvictingPerFilter(Observable<List<Mock>> oMocks, DynamicKeyGroup filterPage, EvictDynamicKey evictFilter);
 }
 ```
@@ -264,7 +280,7 @@ apply plugin: 'com.neenbedankt.android-apt'
 
 dependencies {
     // apt command comes from the android-apt plugin
-    apt "com.github.VictorAlbertos.RxCache:compiler:1.8.0-2.x"
+    apt "com.github.VictorAlbertos.RxCache:compiler:1.8.3-2.x"
 }
 ```
 
@@ -464,9 +480,12 @@ The policy is very simple:
 * Else get it from the loader layer. 
 
 ## Proguard
+Proguard users MUST add the two given lines to their proguard configuration file and MUST use the `@ProviderKey` annotation method for every method that is being used as provider. Without the `@ProviderKey` annotation the method name will be used instead which can lead to providers that use the same name, see issue [#96](https://github.com/VictorAlbertos/RxCache/issues/96) for detailed information.
+
 ```
--dontwarn io.rx_cache.internal.**
--keepclassmembers enum io.rx_cache.Source { *; }
+-dontwarn io.rx_cache2.internal.**
+-keepclassmembers enum io.rx_cache2.Source { *; }
+-keepclassmembernames class * { @io.rx_cache2.* <methods>; }
 ```
 
 
